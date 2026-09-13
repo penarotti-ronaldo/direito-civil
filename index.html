@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulado – Direito Civil (V ou F)</title>
+<style>
+  :root{
+    --bg:#eef1f8;
+    --card:#ffffff;
+    --texto:#1d2433;
+    --muted:#6b7690;
+    --accent:#2f5bea;
+    --accent-soft:#e6ecff;
+    --ok:#0f9d58;
+    --ok-soft:#e6f7ee;
+    --err:#d93025;
+    --err-soft:#fdecea;
+    --borda:#dfe4f0;
+    --sombra:0 2px 10px rgba(29,36,51,.07);
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    font-family:"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--bg);
+    color:var(--texto);
+    line-height:1.55;
+  }
+
+  /* ---------- Topo ---------- */
+  header{
+    background:linear-gradient(135deg,#2f5bea,#5b3fe0);
+    color:#fff;
+    padding:28px 20px 22px;
+  }
+  .header-inner{
+    max-width:900px;
+    margin:0 auto;
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:1.6rem;
+    letter-spacing:.2px;
+  }
+  header p{
+    margin:0;
+    opacity:.9;
+    font-size:.95rem;
+  }
+
+  /* ---------- Barra de progresso fixa ---------- */
+  .barra{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--borda);
+    padding:10px 20px;
+  }
+  .barra-inner{
+    max-width:900px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:.9rem;
+  }
+  .placar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    background:var(--accent-soft);
+    color:var(--accent);
+    border-radius:999px;
+    padding:4px 12px;
+    font-weight:600;
+    font-size:.82rem;
+  }
+  .chip.ok{background:var(--ok-soft);color:var(--ok)}
+  .chip.err{background:var(--err-soft);color:var(--err)}
+  .barra .spacer{flex:1}
+
+  .btn-reset{
+    border:1px solid var(--borda);
+    background:#fff;
+    color:var(--texto);
+    padding:6px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:.85rem;
+    font-weight:600;
+    transition:.15s;
+  }
+  .btn-reset:hover{background:#f2f4fb;border-color:#c9d1e6}
+
+  /* ---------- Lista de questões ---------- */
+  main{
+    max-width:900px;
+    margin:0 auto;
+    padding:22px 20px 60px;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--borda);
+    border-left:5px solid var(--borda);
+    border-radius:12px;
+    padding:18px 20px 16px;
+    margin-bottom:16px;
+    box-shadow:var(--sombra);
+    transition:border-color .2s, transform .15s;
+  }
+  .card.acertou{border-left-color:var(--ok)}
+  .card.errou{border-left-color:var(--err)}
+
+  .cabecalho{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .num{
+    flex:0 0 auto;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    font-size:.85rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:2px;
+  }
+  .card.acertou .num{background:var(--ok)}
+  .card.errou .num{background:var(--err)}
+
+  .enunciado{
+    margin:0;
+    font-size:1rem;
+  }
+
+  /* ---------- Opções V / F ---------- */
+  .opcoes{
+    display:flex;
+    gap:10px;
+    margin:14px 0 0 42px;
+    flex-wrap:wrap;
+  }
+  .opt{
+    cursor:pointer;
+    user-select:none;
+  }
+  .opt input{
+    position:absolute;
+    opacity:0;
+    width:0;
+    height:0;
+  }
+  .opt span{
+    display:inline-block;
+    padding:8px 20px;
+    border:2px solid var(--borda);
+    border-radius:9px;
+    font-weight:700;
+    font-size:.9rem;
+    background:#fff;
+    transition:.15s;
+  }
+  .opt:hover span{border-color:#b9c5e6;background:#f7f9ff}
+  .opt input:checked + span{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+  .opt input:focus-visible + span{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+  .opt.travada{cursor:default}
+  .opt.travada:hover span{border-color:var(--borda);background:#fff}
+  .opt.correta span{
+    border-color:var(--ok) !important;
+    background:var(--ok-soft) !important;
+    color:var(--ok) !important;
+  }
+  .opt.errada-marcada span{
+    border-color:var(--err) !important;
+    background:var(--err-soft) !important;
+    color:var(--err) !important;
+    text-decoration:line-through;
+  }
+
+  /* ---------- Ações / botão ---------- */
+  .acoes{
+    margin:14px 0 0 42px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .btn-verificar{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:9px;
+    padding:9px 22px;
+    font-size:.88rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .btn-verificar:hover:not(:disabled){background:#2348c4}
+  .btn-verificar:disabled{
+    background:#c9d1e6;
+    cursor:not-allowed;
+  }
+
+  .aviso{
+    color:var(--err);
+    font-size:.83rem;
+    font-weight:600;
+  }
+
+  /* ---------- Feedback ---------- */
+  .feedback{
+    margin:14px 0 0 42px;
+    border-radius:10px;
+    padding:0 14px;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height .3s ease, opacity .3s ease, padding .3s ease;
+    font-size:.9rem;
+  }
+  .feedback.visivel{
+    max-height:400px;
+    opacity:1;
+    padding:12px 14px;
+  }
+  .feedback.ok{
+    background:var(--ok-soft);
+    border-left:4px solid var(--ok);
+  }
+  .feedback.err{
+    background:var(--err-soft);
+    border-left:4px solid var(--err);
+  }
+  .feedback .titulo{
+    font-weight:700;
+    display:block;
+    margin-bottom:5px;
+  }
+  .feedback.ok .titulo{color:var(--ok)}
+  .feedback.err .titulo{color:var(--err)}
+  .feedback p{margin:0;color:#333c50}
+
+  /* ---------- Animação de erro ---------- */
+  @keyframes tremer{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+  .tremer{animation:tremer .35s}
+
+  @media (max-width:560px){
+    .opcoes, .acoes, .feedback{margin-left:0}
+    .opt span{padding:8px 14px;font-size:.85rem}
+    header h1{font-size:1.3rem}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>Simulado de Direito Civil</h1>
+    <p>40 afirmações • Marque <strong>V</strong> (Verdadeiro) ou <strong>F</strong> (Falso) e clique em <strong>Verificar</strong> em cada questão para ver a correção comentada.</p>
+  </div>
+</header>
+
+<div class="barra">
+  <div class="barra-inner">
+    <div class="placar">
+      <span class="chip" id="chip-respondidas">Respondidas: 0/40</span>
+      <span class="chip ok" id="chip-acertos">Acertos: 0</span>
+      <span class="chip err" id="chip-erros">Erros: 0</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn-reset" id="btn-reset">Reiniciar simulado</button>
+  </div>
+</div>
+
+<main id="quiz"></main>
+
+<script>
+/* =========================================================
+   BANCO DE QUESTÕES
+   resp: "V" ou "F"  |  comentario: gabarito comentado
+   ========================================================= */
+const QUESTOES = [
+  {
+    n: 1,
+    texto: "A personalidade civil da pessoa humana começa com o nascimento com vida, mas a lei põe a salvo, desde a concepção, os direitos do nascituro.",
+    resp: "V",
+    comentario: "Conforme a regra da capacidade e personalidade, a personalidade começa com o nascimento com vida, resguardando-se os direitos do nascituro desde a concepção."
+  },
+  {
+    n: 2,
+    texto: "Os menores de 16 (dezesseis) anos são considerados relativamente incapazes, devendo exercer seus atos na ordem civil por meio de representação.",
+    resp: "F",
+    comentario: "O Art. 3º estabelece que os menores de 16 anos são absolutamente incapazes e praticam atos representados."
+  },
+  {
+    n: 3,
+    texto: "A maioridade civil no Brasil ocorre aos 18 (dezoito) anos completos.",
+    resp: "V",
+    comentario: "A menoridade cessa aos 18 anos completos, atingindo-se a maioridade civil."
+  },
+  {
+    n: 4,
+    texto: "A existência da pessoa natural termina com a morte.",
+    resp: "V",
+    comentario: "O fim da existência da pessoa natural dá-se expressamente com a morte."
+  },
+  {
+    n: 5,
+    texto: "A vida privada da pessoa natural é considerada inviolável pelo Código Civil.",
+    resp: "V",
+    comentario: "A vida privada é expressamente declarada como inviolável pelo Art. 21 do Código Civil."
+  },
+  {
+    n: 6,
+    texto: "A União, os Estados, o Distrito Federal e os Municípios são considerados pessoas jurídicas de direito público externo.",
+    resp: "F",
+    comentario: "União, Estados, DF, Municípios, Autarquias e associações públicas compõem o rol de pessoas jurídicas de direito público interno."
+  },
+  {
+    n: 7,
+    texto: "As pessoas jurídicas de direito privado iniciam sua existência legal com a simples assinatura do contrato, sem necessidade de inscrição em registro competente.",
+    resp: "F",
+    comentario: "A existência da pessoa jurídica de direito privado começa apenas com a inscrição do ato constitutivo no registro competente."
+  },
+  {
+    n: 8,
+    texto: "Considera-se possuidor todo aquele que tem de fato o exercício, pleno ou não, de algum dos poderes inerentes à propriedade, tais como usar, gozar, dispor ou reaver a coisa.",
+    resp: "V",
+    comentario: "Conceito direto do Art. 1196, definindo a posse como o exercício de fato de poderes inerentes à propriedade."
+  },
+  {
+    n: 9,
+    texto: "A posse justa é aquela que se caracteriza por ser violenta, clandestina ou precária.",
+    resp: "F",
+    comentario: "A posse injusta é a violenta, clandestina ou precária. A posse justa é a que não possui esses vícios."
+  },
+  {
+    n: 10,
+    texto: "É de má-fé a posse quando o possuidor ignora o vício ou o obstáculo que impede a aquisição da coisa.",
+    resp: "F",
+    comentario: "A boa-fé caracteriza-se pela ignorância do possuidor em relação aos vícios ou obstáculos que impedem a aquisição do bem."
+  },
+  {
+    n: 11,
+    texto: "O possuidor tem o direito de ser mantido na posse em caso de turbação e reintegrado no caso de esbulho.",
+    resp: "V",
+    comentario: "Trata-se da garantia da proteção possessória em caso de perturbação (turbação) ou perda (esbulho) da posse."
+  },
+  {
+    n: 12,
+    texto: "Para defender sua posse, não é permitido ao possuidor o uso da autodefesa ou desforço imediato, desde que dentro dos limites do razoável.",
+    resp: "F",
+    comentario: "A autodefesa ou desforço imediato é permitida ao possuidor desde que praticada nos limites do razoável."
+  },
+  {
+    n: 13,
+    texto: "A propriedade do solo abrange as jazidas, os minérios e os recursos hídricos lá existentes, pertencendo todos diretamente ao proprietário do terreno.",
+    resp: "F",
+    comentario: "As jazidas, minérios e recursos hídricos pertencem à União e não integram a propriedade privada do solo."
+  },
+  {
+    n: 14,
+    texto: "A transferência da propriedade de bens imóveis entre vivos ocorre mediante o registro do título no Registro de Imóveis.",
+    resp: "V",
+    comentario: "Para bens imóveis, a transferência do domínio entre vivos só se aperfeiçoa com o registro do título no Cartório de Registro de Imóveis."
+  },
+  {
+    n: 15,
+    texto: "A tradição (entrega da coisa ao adquirente) é o meio pelo qual se transfere a propriedade dos bens móveis.",
+    resp: "V",
+    comentario: "A propriedade das coisas móveis se transfere pela tradição (entrega efetiva)."
+  },
+  {
+    n: 16,
+    texto: "A menoridade cessa antes dos 18 anos completos caso o menor se case.",
+    resp: "V",
+    comentario: "O casamento é uma das causas de cessação da incapacidade/emancipação legal antes dos 18 anos."
+  },
+  {
+    n: 17,
+    texto: "Para o exercício de atividades lícitas, a pessoa tem direito ao uso do nome, porém o mesmo não se pode dizer de seu pseudônimo.",
+    resp: "F",
+    comentario: "O pseudônimo adotado para atividades lícitas goza da mesma proteção dada ao nome."
+  },
+  {
+    n: 18,
+    texto: "Ninguém pode ser constrangido a submeter-se, com risco de vida, a tratamento médico ou a intervenção cirúrgica.",
+    resp: "V",
+    comentario: "É vedado o constrangimento a tratamento médico ou cirúrgico que importe em risco de vida."
+  },
+  {
+    n: 19,
+    texto: "A usucapião extraordinária de bem imóvel exige posse por 15 anos ininterruptos, sem oposição, exigindo-se sempre a comprovação de justo título e boa-fé.",
+    resp: "F",
+    comentario: "A usucapião extraordinária (15 anos) ocorre independentemente de título e boa-fé."
+  },
+  {
+    n: 20,
+    texto: "A pessoa jurídica não se confunde com os seus sócios ou administradores, possuindo autonomia patrimonial.",
+    resp: "V",
+    comentario: "A pessoa jurídica goza de autonomia patrimonial e não se confunde com a figura de seus sócios ou administradores."
+  },
+  {
+    n: 21,
+    texto: "A doação ou disposição gratuita do próprio corpo para fins científicos ou altruísticos após a morte é proibida pelo ordenamento civil.",
+    resp: "F",
+    comentario: "A disposição gratuita do próprio corpo pós-morte para fins científicos ou altruísticos é totalmente válida e revogável a qualquer tempo."
+  },
+  {
+    n: 22,
+    texto: "A perda da propriedade pode ocorrer por alienação, renúncia, abandono, perecimento da coisa e desapropriação.",
+    resp: "V",
+    comentario: "São hipóteses legais explícitas de perda da propriedade móvel e imóvel."
+  },
+  {
+    n: 23,
+    texto: "O imóvel urbano abandonado que não tiver seus ônus fiscais pagos poderá passar ao domínio do Município após o prazo de 3 (três) anos.",
+    resp: "V",
+    comentario: "O imóvel abandonado arrecadado como bem vago passa ao domínio do Município/DF ou da União após decorridos 3 anos."
+  },
+  {
+    n: 24,
+    texto: "Aquele que atua como fâmulo da posse (detentor) conserva a coisa em nome de outrem, cumprindo ordens e instruções em razão de relação de dependência.",
+    resp: "V",
+    comentario: "O fâmulo da posse é mero detentor por estar em relação de dependência cumprindo ordens."
+  },
+  {
+    n: 25,
+    texto: "Os ébrios habituais e os viciados em tóxicos são classificados juridicamente como absolutamente incapazes.",
+    resp: "F",
+    comentario: "Ébrios habituais e viciados em tóxicos são enquadrados como relativamente incapazes (Art. 4º), não absolutamente."
+  },
+  {
+    n: 26,
+    texto: "A emancipação de um menor de 16 anos completos pode ser concedida pelos pais ou por sentença judicial.",
+    resp: "V",
+    comentario: "A concessão pelos pais ou a sentença judicial exige que o menor tenha 16 anos completos."
+  },
+  {
+    n: 27,
+    texto: "A morte presumida sem decretação de ausência pode ser declarada se a pessoa estava em perigo de vida ou se desapareceu em campanha ou foi feita prisioneira e não regressou até 2 anos após o término da guerra.",
+    resp: "V",
+    comentario: "Hipótese de morte presumida sem decretação de ausência prevista para casos de extremo perigo de vida ou guerra/prisão."
+  },
+  {
+    n: 28,
+    texto: "A proteção dos direitos da personalidade de uma pessoa falecida não pode ser reclamada por parentes, extinguindo-se totalmente com o óbito.",
+    resp: "F",
+    comentario: "O cônjuge/companheiro e parentes até o 4º grau têm legitimidade para reclamar e exigir que cesse lesão aos direitos do falecido."
+  },
+  {
+    n: 29,
+    texto: "As pessoas jurídicas de direito público interno respondem objetivamente pelos danos que seus agentes causarem, garantido o direito de regresso contra o causador caso haja dolo ou culpa.",
+    resp: "V",
+    comentario: "A responsabilidade civil das pessoas jurídicas de direito público é objetiva, com direito de regresso condicionado ao dolo ou culpa do agente."
+  },
+  {
+    n: 30,
+    texto: "A proteção aos direitos da personalidade aplica-se às pessoas jurídicas no que couber, a exemplo da proteção à sua honra objetiva.",
+    resp: "V",
+    comentario: "Aplica-se à pessoa jurídica a proteção dos direitos da personalidade no que for compatível (como a honra objetiva/reputação)."
+  },
+  {
+    n: 31,
+    texto: "O possuidor de má-fé tem direito de retenção pelas benfeitorias úteis que tiver realizado no imóvel.",
+    resp: "F",
+    comentario: "O possuidor de má-fé não tem direito de retenção nem ressarcimento por benfeitorias úteis ou voluptuárias, ressarcindo-se apenas as necessárias."
+  },
+  {
+    n: 32,
+    texto: "O possuidor de boa-fé tem direito de indenização pelas benfeitorias necessárias e úteis, podendo reter o bem até o valor destas, e levantar as voluptuárias.",
+    resp: "V",
+    comentario: "O possuidor de boa-fé tem retenção pelas benfeitorias necessárias e úteis, além do direito de levantar as voluptuárias."
+  },
+  {
+    n: 33,
+    texto: "O prazo da usucapião ordinária imobiliária é de 10 anos contínuos (com justo título e boa-fé), podendo ser reduzido para 5 anos se o imóvel foi adquirido onerosamente com base em registro cancelado posteriormente, desde que estabelecida a moradia ou feitos investimentos.",
+    resp: "V",
+    comentario: "Correta aplicação dos prazos de 10 anos e da causa de redução para 5 anos na usucapião ordinária imobiliária."
+  },
+  {
+    n: 34,
+    texto: "A usucapião de bem móvel (mobiliária) exige o prazo de 10 anos caso o possuidor não possua justo título nem boa-fé.",
+    resp: "F",
+    comentario: "O prazo para usucapião extraordinária de bem móvel (independente de título e boa-fé) é de 5 anos (e não 10)."
+  },
+  {
+    n: 35,
+    texto: "Denomina-se avulsão o acréscimo lento e imperceptível de terras às margens de um rio.",
+    resp: "F",
+    comentario: "O acréscimo lento e imperceptível é a aluvião. A avulsão ocorre por força natural violenta e repentina."
+  },
+  {
+    n: 36,
+    texto: "Comoriência é a presunção legal de morte simultânea que ocorre quando dois ou mais indivíduos falecem na mesma ocasião, sem que se possa averiguar qual deles faleceu primeiro.",
+    resp: "V",
+    comentario: "A comoriência ocorre exatamente quando há presunção de morte simultânea entre dois ou mais indivíduos na mesma ocasião por impossibilidade de determinação de quem faleceu primeiro."
+  },
+  {
+    n: 37,
+    texto: "O abuso da personalidade jurídica é caracterizado unicamente pelo cometimento de qualquer ilícito civil, permitindo ao juiz desconsiderar a personalidade para atingir os bens de todos os sócios indiscriminadamente.",
+    resp: "F",
+    comentario: "O abuso da personalidade exige a caracterização de desvio de finalidade ou confusão patrimonial, atingindo apenas os bens dos sócios/administradores diretamente beneficiados."
+  },
+  {
+    n: 38,
+    texto: "Na usucapião especial urbana ou rural, o possuidor precisa comprovar a posse ininterrupta pelo prazo de 5 anos e não pode ser proprietário de nenhum outro imóvel urbano ou rural.",
+    resp: "V",
+    comentario: "Exigência expressa da usucapião especial urbana/rural: 5 anos de posse contínua, uso para moradia/trabalho e vedação de ser proprietário de outro imóvel."
+  },
+  {
+    n: 39,
+    texto: "Na desapropriação judicial por posse-trabalho, o proprietário é privado de uma extensa área se um grupo considerável de pessoas a possuir por 5 anos de boa-fé, realizando obras sociais/econômicas, sem necessidade de pagamento de indenização ao proprietário.",
+    resp: "F",
+    comentario: "A desapropriação judicial por posse-trabalho exige o pagamento de justa indenização ao proprietário, a qual é fixada pelo juiz."
+  },
+  {
+    n: 40,
+    texto: "O possuidor de má-fé responde por todos os frutos colhidos e percebidos, bem como por aqueles que, por sua culpa, deixou de perceber, mas tem direito de ser ressarcido pelas benfeitorias necessárias (sem direito de retenção).",
+    resp: "V",
+    comentario: "O possuidor de má-fé responde por todos os frutos (percebidos e os que deixou de perceber por culpa), mantendo apenas o direito ao ressarcimento das benfeitorias necessárias, sem retenção."
+  }
+];
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const TOTAL = QUESTOES.length;
+const respondidas = new Set();
+let acertos = 0;
+let erros = 0;
+
+/* =========================================================
+   RENDERIZAÇÃO
+   ========================================================= */
+const quizEl = document.getElementById('quiz');
+
+function renderizar() {
+  quizEl.innerHTML = QUESTOES.map(q => `
+    <article class="card" id="card-${q.n}">
+      <div class="cabecalho">
+        <span class="num">${q.n}</span>
+        <p class="enunciado">${q.texto}</p>
+      </div>
+
+      <div class="opcoes" id="opcoes-${q.n}">
+        <label class="opt" data-valor="V">
+          <input type="radio" name="q${q.n}" value="V">
+          <span>V – Verdadeiro</span>
+        </label>
+        <label class="opt" data-valor="F">
+          <input type="radio" name="q${q.n}" value="F">
+          <span>F – Falso</span>
+        </label>
+      </div>
+
+      <div class="acoes">
+        <button class="btn-verificar" data-n="${q.n}">Verificar</button>
+        <span class="aviso" id="aviso-${q.n}" style="display:none">Escolha V ou F antes de verificar.</span>
+      </div>
+
+      <div class="feedback" id="fb-${q.n}"></div>
+    </article>
+  `).join('');
+}
+
+/* =========================================================
+   VERIFICAÇÃO INDIVIDUAL
+   ========================================================= */
+function verificar(n) {
+  const q = QUESTOES.find(item => item.n === n);
+  const card = document.getElementById('card-' + n);
+  const opcoesBox = document.getElementById('opcoes-' + n);
+  const aviso = document.getElementById('aviso-' + n);
+  const fb = document.getElementById('fb-' + n);
+  const btn = card.querySelector('.btn-verificar');
+
+  // Se já foi respondida, ignora
+  if (respondidas.has(n)) return;
+
+  const marcada = card.querySelector(`input[name="q${n}"]:checked`);
+
+  // Nenhuma alternativa selecionada
+  if (!marcada) {
+    aviso.style.display = 'inline';
+    opcoesBox.classList.remove('tremer');
+    void opcoesBox.offsetWidth; // reinicia a animação
+    opcoesBox.classList.add('tremer');
+    return;
+  }
+
+  aviso.style.display = 'none';
+
+  const valorMarcado = marcada.value;
+  const acertou = valorMarcado === q.resp;
+
+  // Trava as opções e destaca a correta / a errada marcada
+  opcoesBox.querySelectorAll('.opt').forEach(opt => {
+    opt.classList.add('travada');
+    const input = opt.querySelector('input');
+    input.disabled = true;
+    const valor = opt.dataset.valor;
+
+    if (valor === q.resp) {
+      opt.classList.add('correta');
+    } else if (valor === valorMarcado) {
+      opt.classList.add('errada-marcada');
+    }
+  });
+
+  // Monta o feedback
+  fb.className = 'feedback visivel ' + (acertou ? 'ok' : 'err');
+  fb.innerHTML = `
+    <span class="titulo">
+      ${acertou ? '✔ Você acertou!' : '✘ Você errou.'}
+      Resposta correta: <strong>${q.resp === 'V' ? 'VERDADEIRO' : 'FALSO'}</strong>
+    </span>
+    <p><strong>Comentário:</strong> ${q.comentario}</p>
+  `;
+
+  // Ajusta visual do card e do botão
+  card.classList.add(acertou ? 'acertou' : 'errou');
+  btn.disabled = true;
+  btn.textContent = acertou ? 'Acertou ✔' : 'Errou ✘';
+
+  // Atualiza placar
+  respondidas.add(n);
+  if (acertou) acertos++; else erros++;
+  atualizarPlacar();
+}
+
+/* =========================================================
+   PLACAR
+   ========================================================= */
+function atualizarPlacar() {
+  document.getElementById('chip-respondidas').textContent =
+    `Respondidas: ${respondidas.size}/${TOTAL}`;
+  document.getElementById('chip-acertos').textContent = `Acertos: ${acertos}`;
+  document.getElementById('chip-erros').textContent = `Erros: ${erros}`;
+}
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+quizEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-verificar');
+  if (btn) {
+    verificar(Number(btn.dataset.n));
+  }
+});
+
+// Permite verificar pressionando Enter no radio
+quizEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.type === 'radio') {
+    const n = Number(e.target.name.replace('q', ''));
+    verificar(n);
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  respondidas.clear();
+  acertos = 0;
+  erros = 0;
+  atualizarPlacar();
+  renderizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+renderizar();
+atualizarPlacar();
+</script>
+
+</body>
+</html>
